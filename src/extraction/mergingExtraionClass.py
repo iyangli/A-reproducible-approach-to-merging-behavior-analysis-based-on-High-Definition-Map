@@ -3,13 +3,9 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 import warnings
-warnings.filterwarnings("ignore")
-pd.set_option('max_colwidth',200)
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
-pd.set_option('display.width', 1000)
 from conf import laneletID
 from util import common
+warnings.filterwarnings("ignore")
 
 class MergingExtracionClass(object):
     def __init__(self,config):
@@ -62,11 +58,9 @@ class MergingExtracionClass(object):
                                          "rightRearId",
                                          "rightAlongsideId"]
 
-        # Safety Analysis
         self.safetyAnalysisData = None
         self.TTCThreshold = 2
         self.outputPathSafety = self.savePath + "mergingDataSafety"+str(self.DISTANCE)+"m.csv"
-
 
         self.locationTotalMergingDistance = {
             "2": 160.32,
@@ -148,8 +142,7 @@ class MergingExtracionClass(object):
 
         except:
             logger.info("error happen, vehicle {}, frame {}", row["trackId"], row["frame"])
-            # print(row["latLaneCenterOffset"])
-            # print("self.tracksSelf" + str(self.tracksSelf))
+
             return False
 
     def run(self):
@@ -280,8 +273,6 @@ class MergingExtracionClass(object):
     def calculateSafetyIndicatros(self,row1,row2):
         leadVehicleId = row1["LeadVehicleId"]
         rearVehicleId = row1["RearVehicleId"]
-        # print("leadVehicle = " + str(leadVehicleId))
-        # print("rearVehicle = " + str(rearVehicleId))
 
         curFrame = row2["frame"]
         leadData = self.tracksBeforeMerge[
@@ -293,7 +284,6 @@ class MergingExtracionClass(object):
             & (self.tracksBeforeMerge["trackId"] == rearVehicleId)
             ]
 
-        # 自身车辆的位置与速度
         positionSelfVector = np.array([row1["xCenter"], row1["yCenter"]])
         speedSelfVector = np.array([abs(row1["xVelocity"]), abs(row1["yVelocity"])])
         speedSelf = np.sqrt(row1["xVelocity"]**2+row1["yVelocity"]**2)
@@ -404,15 +394,15 @@ class MergingExtracionClass(object):
             ]
         ] = curData.apply(lambda row2: self.calculateSafetyIndicatros(row1,row2), axis=1, result_type="expand")
 
-        # TET 与 TIT 计算
+        # TET and TIT
         riskTTCLead = curData[curData["LeadTTCMinusThreshold"]!= "None"]
         riskTTCRear = curData[curData["RearTTCMinusThreshold"]!= "None"]
 
-        # TET计算
+        # TET
         curData["TETLead"] =  len(riskTTCLead) * self.TIMESTEP
         curData["TETRear"] = len(riskTTCRear) * self.TIMESTEP
 
-        # TIT计算
+        # TIT
         curData["TITLead"] = sum(riskTTCLead["LeadTTCMinusThreshold"])
         curData["TITRear"] = sum(riskTTCRear["RearTTCMinusThreshold"])
 
@@ -450,12 +440,6 @@ class MergingExtracionClass(object):
             return 999, 999,999
 
 
-
-
-
-
-
-
     def calculateFlowDensitySpeed(self, curtracks: object, area: object):
         curtracks = curtracks[curtracks["laneletId"].isin(self.HDMdata[area])]
         curtracks.sort_index(inplace=True)
@@ -463,9 +447,6 @@ class MergingExtracionClass(object):
         time = (max(self.tracksSelfInArea123.index.values)-min(self.tracksSelfInArea123.index.values)) * 0.04
         roadlength = sum([self.HDMdata["length"][str(i)] for i in self.HDMdata[area]])
         retangle = time * roadlength
-        # print(time)
-        # print(roadlength)
-        # print(retangle)
 
         totaldistance = []
         totaltime = []
@@ -477,8 +458,7 @@ class MergingExtracionClass(object):
 
             totaldistance.append(curdistance)
             totaltime.append(curtime)
-        # print(totaldistance)
-        # print(totaltime)
+
         if len(totaldistance) != 0 and len(totaltime) != 0:
             flow = sum(totaldistance) / retangle
             density = sum(totaltime) / retangle
@@ -636,9 +616,6 @@ class MergingExtracionClass(object):
                 }
 
         surroudingInfo = {"vehicleNums": len(trajectoryInfo.keys()), "trajectory": trajectoryInfo}
-        # print(surroudingInfo)
-        # print(RearVehicleNumber)
-        # print(MinimumDistance)
 
         if MinimumRearStatus == "None" and MinimumLeadStatus == "None":
             MergingType = "A"
@@ -657,14 +634,11 @@ class MergingExtracionClass(object):
         elif MinimumRearStatus == "lead to rear" and MinimumLeadStatus == "Exist":
             MergingType = "H"
 
-
         return surroudingInfo, RearVehicleNumber, MinimumRearDistance,\
                MinimumRearStatus,MinimumRearClass, LeadVehicleNumber, \
                MinimumLeadDistance, MinimumLeadStatus,MinimumLeadClass,\
                MergingType,LeadVehicleId,RearVehicleId,\
                RearVehicleSpeed,RearHeadway,LeadVehicleSpeed,LeadHeadway
-
-
 
     def getMergingDistance(self, row):
         if  row["RouteClass"] != "entry":
@@ -731,14 +705,11 @@ class MergingExtracionClass(object):
                 obeyRule = "Yes"
                 obeyArea = "area 1"
 
-        # logger.info("mergingdistance {}, mergingdistanceratio {}, obeyRule {}, obeyArea {}",
-        #             mergingdistance, mergingdistanceratio, obeyRule, obeyArea)
         return mergingdistance, mergingdistanceratio, obeyRule, obeyArea
 
     def getMergingDuration(self, row):
         if row["MergingState"] == False or row["RouteClass"] == "mainline" or row["BreakRuleState"] == "Yes":
             return 0
-        # logger.info("mergingduration {}", len(self.tracksSelfInArea23) * 0.04)
         return len(self.tracksSelfInArea23) * 0.04
 
     def calculateConsecutiveLanechange(self, gaplist, tmpconcat):
@@ -755,9 +726,7 @@ class MergingExtracionClass(object):
                 falseIndex = np.where(onrampState[indexTrue:] == False)[0][0]
                 type = 2
                 time = (gaplist[indexTrue + falseIndex] - gaplist[indexTrue]) * 0.04
-                # print(gaplist)
-                # print(tmpconcat["MergingState"].values)
-                # print(time)
+
         return type, time
 
     def getLateralSpeedandAcceleration(self, row):
@@ -776,8 +745,6 @@ class MergingExtracionClass(object):
             dfx = p.deriv()
             ddfx = dfx.deriv()
             speed, acceleration = [dfx(i) for i in x], [ddfx(i) for i in x]
-
-            # logger.info("maxspeed {}, maxacc {}", max(speed) / 0.04, max(acceleration) / 0.04)
 
             return max(speed) / 0.04, max(acceleration) / 0.04, min(acceleration) / 0.04
         except:
