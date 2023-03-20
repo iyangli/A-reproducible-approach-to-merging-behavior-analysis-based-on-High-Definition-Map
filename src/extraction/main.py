@@ -7,7 +7,7 @@ from src.extraction.mergingExtraionClass import MergingExtracionClass
 def createArgs():
     cs = argparse.ArgumentParser(description="Dataset Tracks Visualizer")
 
-    cs.add_argument('--distance_threshold', default=200,
+    cs.add_argument('--distance_threshold', default=100,
                     help="distance threshold to match the surrounding vehicles.", type=int)
 
     cs.add_argument('--lookback', default=3,
@@ -25,8 +25,6 @@ def main():
     config = createArgs()
     logger.info("Extracting trajectories and calculating metrics")
     logger.info("distance threshold {}, lookback is {}",config["distance_threshold"],config["lookback"])
-
-
     trajectoryExtraction = MergingExtracionClass(config)
     trajectoryExtraction.run()
 

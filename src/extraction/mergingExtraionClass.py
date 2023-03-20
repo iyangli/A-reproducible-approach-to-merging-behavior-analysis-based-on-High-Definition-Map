@@ -58,10 +58,6 @@ class MergingExtracionClass(object):
                                          "rightRearId",
                                          "rightAlongsideId"]
 
-        self.safetyAnalysisData = None
-        self.TTCThreshold = 2
-        self.outputPathSafety = self.savePath + "mergingDataSafety"+str(self.DISTANCE)+"m.csv"
-
         self.locationTotalMergingDistance = {
             "2": 160.32,
             "3": 200.52,
@@ -229,7 +225,6 @@ class MergingExtracionClass(object):
             del tracks, tracksmeta, recordingmeta
 
         data.to_csv(self.outputPath)
-        self.safetyAnalysisData.to_csv(self.outputPathSafety)
 
     def getTTCList(self, surroundingtracksData):
         framelist, TTClist, distancelist, speeddiff = [], [], [], []
@@ -270,149 +265,9 @@ class MergingExtracionClass(object):
 
         return dic
 
-    def calculateSafetyIndicatros(self,row1,row2):
-        leadVehicleId = row1["LeadVehicleId"]
-        rearVehicleId = row1["RearVehicleId"]
-
-        curFrame = row2["frame"]
-        leadData = self.tracksBeforeMerge[
-            (self.tracksBeforeMerge["frame"] == curFrame)
-            & (self.tracksBeforeMerge["trackId"] == leadVehicleId)
-            ]
-        rearData = self.tracksBeforeMerge[
-            (self.tracksBeforeMerge["frame"] == curFrame)
-            & (self.tracksBeforeMerge["trackId"] == rearVehicleId)
-            ]
-
-        positionSelfVector = np.array([row1["xCenter"], row1["yCenter"]])
-        speedSelfVector = np.array([abs(row1["xVelocity"]), abs(row1["yVelocity"])])
-        speedSelf = np.sqrt(row1["xVelocity"]**2+row1["yVelocity"]**2)
-
-        if  leadData.empty:
-            LeadxCenter = "None"
-            LeadyCenter = "None"
-            LeadxVelocity = "None"
-            LeadyVelocity = "None"
-            LeadDistance = "None"
-            LeadHeadway = "None"
-            LeadTTC = "None"
-            LeadSpeed = "None"
-            DeltaLeadSpeed = "None"
-            LeadTTCMinusThreshold = "None"
-        else:
-            positionLead = np.array([leadData["xCenter"].values[0], leadData["yCenter"].values[0]])
-            speedLead = np.array([abs(leadData["xVelocity"].values[0]), abs(leadData["yVelocity"].values[0])])
-            distanceLead = np.sqrt(np.dot((positionSelfVector - positionLead), (positionSelfVector - positionLead).T))
-            distanceLead_ = np.dot((positionSelfVector - positionLead).T, (speedSelfVector - speedLead)) / distanceLead
-            TTCLead = - distanceLead / distanceLead_
-            LeadxCenter = leadData["xCenter"].values[0]
-            LeadyCenter = leadData["yCenter"].values[0]
-            LeadxVelocity = leadData["xVelocity"].values[0]
-            LeadyVelocity = leadData["yVelocity"].values[0]
-            LeadSpeed = np.sqrt(LeadxVelocity**2+LeadyVelocity**2)
-            DeltaLeadSpeed = speedSelf - LeadSpeed
-            LeadDistance = distanceLead
-            LeadHeadway = distanceLead/ speedSelf
-            LeadTTC = TTCLead
-
-            if 0 < LeadTTC <= self.TTCThreshold:
-                LeadTTCMinusThreshold = (self.TTCThreshold - LeadTTC) * self.TIMESTEP
-            else:
-                LeadTTCMinusThreshold = "None"
-
-        if  rearData.empty:
-            RearxCenter = "None"
-            RearyCenter = "None"
-            RearxVelocity = "None"
-            RearyVelocity = "None"
-            RearDistance = "None"
-            RearHeadway = "None"
-            RearTTC = "None"
-            RearSpeed = "None"
-            DeltaRearSpeed = "None"
-            RearTTCMinusThreshold = "None"
-
-        else:
-            positionRear = np.array([rearData["xCenter"].values[0], rearData["yCenter"].values[0]])
-            speedRear = np.array([abs(rearData["xVelocity"].values[0]), abs(rearData["yVelocity"].values[0])])
-            distanceRear = np.sqrt(np.dot((positionSelfVector - positionRear), (positionSelfVector - positionRear).T))
-            distanceRear_ = np.dot((positionSelfVector - positionRear).T, (speedSelfVector - speedRear)) / distanceRear
-            TTCRear = - distanceRear / distanceRear_
-            RearxCenter = rearData["xCenter"].values[0]
-            RearyCenter = rearData["yCenter"].values[0]
-            RearxVelocity = rearData["xVelocity"].values[0]
-            RearyVelocity = rearData["yVelocity"].values[0]
-            RearSpeed = np.sqrt(RearxVelocity**2+RearyVelocity**2)
-            DeltaRearSpeed = speedSelf - RearSpeed
-            RearDistance = distanceRear
-            RearHeadway = distanceRear/ RearSpeed
-            RearTTC = TTCRear
-
-            if 0 < RearTTC <= self.TTCThreshold:
-                RearTTCMinusThreshold = (self.TTCThreshold - RearTTC) * self.TIMESTEP
-            else:
-                RearTTCMinusThreshold = "None"
-
-        if leadData.empty or rearData.empty:
-            AcceptedGap = 999
-        else:
-            AcceptedGap = np.sqrt(
-                (leadData["xCenter"].values[0]-rearData["xCenter"].values[0])**2+
-                (leadData["yCenter"].values[0]-rearData["yCenter"].values[0])**2
-            )
-
-        return RearxCenter, RearyCenter, RearxVelocity, RearyVelocity, \
-               LeadxCenter, LeadyCenter, LeadxVelocity, LeadyVelocity, \
-               LeadDistance, LeadHeadway, LeadSpeed,DeltaLeadSpeed, LeadTTC,LeadTTCMinusThreshold, \
-               RearDistance, RearHeadway, RearSpeed, DeltaRearSpeed, RearTTC,RearTTCMinusThreshold,\
-               AcceptedGap,speedSelf
-
-    def outputSafetyData(self,row1):
-        columns = [
-            'location', 'weekday', 'vehicleClass', 'RouteClass',
-            'MergingState', 'MergingDistance', 'MergingDistanceRatio',
-            'MergingDuration','MaxLateralSpeed', 'MaxiLateralAcc','MiniLateralAcc',
-            'MinimumRearClass', 'MinimumLeadClass',"LeadVehicleId", "RearVehicleId",
-            "LaneChangingCounts", "ConsecutiveDuration",
-            "trafficFlowArea4", "trafficDensityArea4","trafficSpeedArea4",
-            "trafficFlowArea5","trafficDensityArea5", "trafficSpeedArea5",
-            'MergingType'
-        ]
-
-        curData = self.tracksSelfInArea23
-        curData[columns] = row1[columns]
-        # print(curData)
-        # print(row1)
-
-        curData[
-            [
-                "RearxCenter", "RearyCenter", "RearxVelocity", "RearyVelocity",
-                "LeadxCenter", "LeadyCenter", "LeadxVelocity", "LeadyVelocity",
-                "LeadDistance", "LeadHeadway","LeadSpeed","DeltaLeadSpeed", "LeadTTC","LeadTTCMinusThreshold",
-                "RearDistance", "RearHeadway","RearSpeed", "DeltaRearSpeed", "RearTTC","RearTTCMinusThreshold",
-                "AcceptedGap","SelfSpeed"
-            ]
-        ] = curData.apply(lambda row2: self.calculateSafetyIndicatros(row1,row2), axis=1, result_type="expand")
-
-        # TET and TIT
-        riskTTCLead = curData[curData["LeadTTCMinusThreshold"]!= "None"]
-        riskTTCRear = curData[curData["RearTTCMinusThreshold"]!= "None"]
-
-        # TET
-        curData["TETLead"] =  len(riskTTCLead) * self.TIMESTEP
-        curData["TETRear"] = len(riskTTCRear) * self.TIMESTEP
-
-        # TIT
-        curData["TITLead"] = sum(riskTTCLead["LeadTTCMinusThreshold"])
-        curData["TITRear"] = sum(riskTTCRear["RearTTCMinusThreshold"])
-
-        self.safetyAnalysisData = pd.concat([self.safetyAnalysisData, curData], axis=0)
-
     def getMinimumTTCRearAndLead(self, row):
         if row["MergingState"] == False or row["RouteClass"] == "mainline" or row["BreakRuleState"] == "Yes":
             return 999,999,999
-
-        self.outputSafetyData(row)
 
         conflictdata = {}
 
@@ -701,7 +556,7 @@ class MergingExtracionClass(object):
             if mergingdistanceratio > 1:
                 obeyRule = "Yes"
                 obeyArea = "area 4"
-            elif mergingdistanceratio <= 0:
+            elif mergingdistanceratio < 0:
                 obeyRule = "Yes"
                 obeyArea = "area 1"
 
