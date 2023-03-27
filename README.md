@@ -75,9 +75,8 @@ Merging Behavior, High Definition Map, Reproducible Research, exiD dataset.
 
 ## Install
 
-You are recommended to create a new Conda environment to install the project
-
 1. Create new conda environment
+You are recommended to create a new Conda environment to install the project
 ```bash
 conda create -n MBA python=3.7
 conda activate MBA

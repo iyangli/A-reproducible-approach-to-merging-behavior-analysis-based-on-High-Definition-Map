@@ -1,7 +1,6 @@
 import  os
 import argparse
 from loguru import logger
-
 from src.extraction.mergingExtraionClass import MergingExtracionClass
 
 def createArgs():
@@ -30,4 +29,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

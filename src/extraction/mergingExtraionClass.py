@@ -174,7 +174,6 @@ class MergingExtracionClass(object):
 
                 laneChangeMoment = curgroup[curgroup["laneChange"] == 1]
                 tmpconcat = laneChangeMoment.loc[common.filterLaneChange(laneChangeMoment.index.values)]
-
                 tmpconcat["location"] = self.location
                 tmpconcat["weekday"] = self.weekday
                 tmpconcat["vehicleClass"] = tracksmeta[tracksmeta["trackId"] == curid]["class"].values[0]
