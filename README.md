@@ -56,7 +56,40 @@ Existing research on merging behavior generally prioritize the application of va
 **Keywords:**
 Merging Behavior, High Definition Map, Reproducible Research, exiD dataset.
 
+
+## Install
+
+* Create new conda environment
+
+You are recommended to create a new Conda environment to install the project
+```bash
+conda create -n MBA python=3.7
+conda activate MBA
+```
+
+* Clone this repo
+
+```bash
+git clone https://github.com/iyangli/A-reproducible-approach-to-merging-behavior-analysis-based-on-High-Definition-Map.git
+```
+
+* Install all required packages
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+### Application of HD Map of merging area
+
+Below shows the lanlet2 HD map for location 2. We divide the merging area into: Area 1: Vehicles approach the acceleration lane from the on-ramp. The current laneletId is 1500, with a total length of 67.56m. Area 2: The left side of a vehicle is a dashed line, and it could merge into the mainline within this area. The current laneletId is 1503, with a total length of 119.57m. Area 3: The acceleration lane gradually disappears and lane drops from three to two. The current laneletId and length are 1567 and 40.65m. Area 4: This area is the upstream of the mainline outer lane within the merging area. It contains three laneletIds, 1489, 1493 and 1499, with lengths of 81.7m, 29.78m, and 67.87m. Area 5: vehicles travel from the acceleration lane to this area and may interact with mainline vehicles. The current laneletId is 1502, 1574 and the length is 119.45m, 40.65m.
+
+
+<img src="./asset/preliminaryAnalysis/HDmap.png" width = "500"  />
+
+### Comparative microscopic and macroscopic analysis
 **Research bullets**
+```
 1. Merging distance
 2. Merging distance ratio
 3. Merging duration
@@ -71,31 +104,7 @@ Merging Behavior, High Definition Map, Reproducible Research, exiD dataset.
 12. Accepted gap analysis
 13. Scenario similarity
 14. Consecutive lane-changing duration
-
-
-## Install
-
-1. Create new conda environment
-You are recommended to create a new Conda environment to install the project
-```bash
-conda create -n MBA python=3.7
-conda activate MBA
 ```
-
-2. Clone this repo
-
-```bash
-git clone https://github.com/iyangli/A-reproducible-approach-to-merging-behavior-analysis-based-on-High-Definition-Map.git
-```
-
-3. Install all required packages
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
-
-
 
 
 ## Contributing
