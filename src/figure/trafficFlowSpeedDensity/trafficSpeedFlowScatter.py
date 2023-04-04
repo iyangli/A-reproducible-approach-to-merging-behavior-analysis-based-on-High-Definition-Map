@@ -147,6 +147,4 @@ for i in [2,3,5,6]:
     j += 1
 
 plt.tight_layout()
-# plt.show()
 plt.savefig(root_path+"/asset/trafficFlowSpeed/trafficSpeedFlowScatter.png", dpi=400)
-# plt.clf()

@@ -43,8 +43,6 @@ mergingData100m = ori_data100m[
     & (ori_data100m['MergingType'] != 'G')
     & (ori_data100m['MergingType'] != 'H')
     ]
-# mergingData100m['miniTTC'] = mergingData100m.loc[:, ['MiniRearTTC', 'MiniLeadTTC']].min(axis=1)
-# mergingData100m = mergingData100m[mergingData100m["miniTTC"] < TTC_THRESHOLD]
 
 mergingData150m = ori_data150m[
     (ori_data150m['MergingState'] == True)
@@ -56,8 +54,6 @@ mergingData150m = ori_data150m[
     & (ori_data150m['MergingType'] != 'G')
     & (ori_data150m['MergingType'] != 'H')
     ]
-# mergingData150m['miniTTC'] = mergingData150m.loc[:, ['MiniRearTTC', 'MiniLeadTTC']].min(axis=1)
-# mergingData150m = mergingData150m[mergingData150m["miniTTC"] < TTC_THRESHOLD]
 
 mergingData200m = ori_data200m[
     (ori_data200m['MergingState'] == True)
@@ -69,8 +65,6 @@ mergingData200m = ori_data200m[
     & (ori_data200m['MergingType'] != 'G')
     & (ori_data200m['MergingType'] != 'H')
     ]
-# mergingData200m['miniTTC'] = mergingData200m.loc[:, ['MiniRearTTC', 'MiniLeadTTC']].min(axis=1)
-# mergingData200m = mergingData200m[mergingData200m["miniTTC"] < TTC_THRESHOLD]
 
 mergingData100m.sort_values(by="MergingType", inplace=True)
 mergingData150m.sort_values(by="MergingType", inplace=True)
@@ -80,13 +74,14 @@ mergingData100m['totalvelocity'] = np.sqrt(np.square(mergingData100m['xVelocity'
 mergingData150m['totalvelocity'] = np.sqrt(np.square(mergingData150m['xVelocity']) + np.square(mergingData150m['yVelocity']))
 mergingData200m['totalvelocity'] = np.sqrt(np.square(mergingData200m['xVelocity']) + np.square(mergingData200m['yVelocity']))
 
-
 mergingData100m['MergingDistanceRatio'] = mergingData100m['MergingDistanceRatio'].astype('float')
 mergingData150m['MergingDistanceRatio'] = mergingData150m['MergingDistanceRatio'].astype('float')
 mergingData200m['MergingDistanceRatio'] = mergingData200m['MergingDistanceRatio'].astype('float')
+
 mergingData100m['MaxLateralSpeed'] = mergingData100m['MaxLateralSpeed'].astype('float')
 mergingData150m['MaxLateralSpeed'] = mergingData150m['MaxLateralSpeed'].astype('float')
 mergingData200m['MaxLateralSpeed'] = mergingData200m['MaxLateralSpeed'].astype('float')
+
 mergingData100m['MaxiLateralAcc'] = mergingData100m['MaxiLateralAcc'].astype('float')
 mergingData150m['MaxiLateralAcc'] = mergingData150m['MaxiLateralAcc'].astype('float')
 mergingData200m['MaxiLateralAcc'] = mergingData200m['MaxiLateralAcc'].astype('float')
@@ -164,7 +159,6 @@ for curMetrics in ["totalvelocity", 'MergingDistanceRatio',"MergingDuration", "M
         for j in range(0,i):
             mask[j][i]=True
 
-
     FONTSIZE = 16
     plt.figure(figsize=(24, 8))
     plt.style.use('seaborn-colorblind')
@@ -209,6 +203,4 @@ for curMetrics in ["totalvelocity", 'MergingDistanceRatio',"MergingDuration", "M
         j += 1
 
     plt.tight_layout()
-    # plt.show()
     plt.savefig(root_path+"/asset/JSDivergence/"+usedMetrics+"EightMergingType.png", dpi=300)
-    # plt.clf()

@@ -62,9 +62,6 @@ for curLocation, curLocationGroup in mergingData.groupby("location"):
 
         statistic = pd.concat([statistic, pd.DataFrame([curDic])], axis=0)
 
-# statistic.to_excel(root_path+"/asset/table/trafficFlowSpeed.xlsx")
-
-
 FONTSIZE = 16
 plt.figure(figsize=(12, 6))
 plt.style.use('seaborn-colorblind')
@@ -116,6 +113,4 @@ ax2.get_legend().remove()
 plt.title("downstream traffic flow", font1)
 
 plt.tight_layout()
-# plt.show()
 plt.savefig(root_path+"/asset/trafficFlowSpeed/trafficFlowMergingType.png", dpi=400)
-# plt.clf()

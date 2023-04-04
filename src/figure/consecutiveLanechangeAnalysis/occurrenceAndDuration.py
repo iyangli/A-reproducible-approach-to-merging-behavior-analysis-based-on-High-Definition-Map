@@ -122,7 +122,6 @@ for distance in [100,150,200,"average"]:
     i +=1
 
 for distance in [100,150,200,"average"]:
-    # print(carStatistc[carStatistc["DISTANCE"] == distance])
 
     ax2 = plt.subplot(2,4,i)
     g1 = sns.barplot(x="MergingType", y="ConsecutiveDuration", hue="location", data=statistic[statistic["DISTANCE"] == distance],palette="hls")
@@ -138,8 +137,5 @@ for distance in [100,150,200,"average"]:
     plt.title("DISTANCE="+str(distance),font1)
     i +=1
 
-
 plt.tight_layout()
-# plt.show()
 plt.savefig(root_path+"/asset/consecutiveLaneChange/occurrenceAndDuration.png", dpi=300)
-# plt.clf()

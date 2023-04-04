@@ -21,13 +21,9 @@ with open(root_path+"/conf/visualizer_params.json") as f:
 
 dataset_params = dataset_params["exid"]
 
-# read file
 data_path = root_path+"/asset/mergingData100m.csv"
 ori_data = pd.read_csv(data_path)
 mergingData = ori_data[(ori_data['MergingState']==True) & (ori_data['RouteClass']=='entry') ]
-# mergingData = ori_data[(ori_data['MergingState']==True) & (ori_data['RouteClass']=='entry') & (ori_data['BreakRuleState']=='None') & (ori_data['MergingDistance'] !='None')  & (ori_data['MaxLateralSpeed'] !='None') ]
-
-
 mergingData["xCenterVis"] = mergingData["xCenter"] / ortho_px_to_meter
 mergingData["yCenterVis"] = -mergingData["yCenter"] / ortho_px_to_meter
 mergingData["xCenterVis"] = mergingData["xCenterVis"]/dataset_params["scale_down_factor"]
@@ -129,7 +125,6 @@ for curlocation in range(2,7):
     plt.ylabel("y position",fontsize = FONTSIZE)
     ax4.set(xlabel=None)
 
-    # plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.1, hspace=0.1)
     plt.tight_layout()
     plt.savefig(root_path+"/asset/preliminaryAnalysis/mergingPointScatter "+str(curlocation)+".png", dpi=800)
     plt.close()

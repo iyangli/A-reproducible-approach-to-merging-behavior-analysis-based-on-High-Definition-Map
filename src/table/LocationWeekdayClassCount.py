@@ -1,28 +1,21 @@
-#!python3
-__author__ = "Yang Li"
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 from matplotlib import ticker
 
-# python console show all
 pd.set_option('max_colwidth',200)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 1000)
 
-# absolute path
 root_path = os.path.abspath('../../')
 output_path =  root_path + "/asset/datasetPreprocess/classificationStatistics/"
 
-# Loop each file
 locationClassStatistic =pd.DataFrame()
 recordingClassCount = pd.DataFrame()
 tracksMetaAll=pd.DataFrame()
 
-# duraction
 durationDic = {
     "location 0": 0,
     "location 1": 0,
@@ -33,7 +26,6 @@ durationDic = {
     "location 6": 0,
 }
 
-# startTime
 startTimeLocation0 = []
 startTimeLocation1 = []
 startTimeLocation2 = []
@@ -42,40 +34,23 @@ startTimeLocation4 = []
 startTimeLocation5 = []
 startTimeLocation6 = []
 
-# speedLimit
-# speedLimitLocation0 = []
-# speedLimitLocation1 = []
-# speedLimitLocation2 = []
-# speedLimitLocation3 = []
-# speedLimitLocation4 = []
-# speedLimitLocation5 = []
-# speedLimitLocation6 = []
-
-
-
 for i in range(0,93):
-    # read data
     cur_data_id = "%02d" % i
     cur_path_tracksMeta = root_path + "/drone-dataset-tools-master/data/" + str(cur_data_id) + "_tracksMeta.csv"
     cur_path_recordingMeta = root_path + "/drone-dataset-tools-master/data/" + str(cur_data_id) + "_recordingMeta.csv"
     tracksMeta_data = pd.read_csv(cur_path_tracksMeta)
     recordingMeta_data = pd.read_csv(cur_path_recordingMeta)
 
-    # match location and weekday
     tracksMeta_data["locationId"] = recordingMeta_data["locationId"].values[0]
     tracksMeta_data["weekday"] = recordingMeta_data["weekday"].values[0]
     tempData = tracksMeta_data[["recordingId","trackId","class","locationId","weekday"]]
     locationClassStatistic = pd.concat([locationClassStatistic, tempData], axis=0, ignore_index=True)
 
-    # count by vehicle type for each recording
     currentRecordingClassCount = tracksMeta_data["class"].value_counts().rename_axis('vehicle type').reset_index(name='counts')
     currentRecordingClassCount["recordingID"] = cur_data_id
     recordingClassCount = pd.concat([recordingClassCount,currentRecordingClassCount], axis=0)
 
     tracksMetaAll = pd.concat([tracksMetaAll, recordingMeta_data], axis=0)
-
-
-    # duration for each location
 
     cur_data_id = float(cur_data_id)
     if cur_data_id in list(range(0,19,1)):
@@ -92,9 +67,6 @@ for i in range(0,93):
         durationDic["location 5"] += recordingMeta_data["duration"].values[0]
     else:
         durationDic["location 6"] += recordingMeta_data["duration"].values[0]
-
-
-    # startTime for each location
 
     cur_data_id = float(cur_data_id)
     if cur_data_id in list(range(0,19,1)):
@@ -114,7 +86,6 @@ for i in range(0,93):
 
 print(tracksMetaAll)
 
-print('-------------')
 currentTracksMetaAll=pd.DataFrame
 for cur_group_id, cur_group_data in tracksMetaAll.groupby("locationId"):
     for cur_group_id2, cur_group_data2 in cur_group_data.groupby("startTime"):
@@ -133,7 +104,6 @@ print(startTimeLocation5)
 print(startTimeLocation6)
 
 
-# class\weekday for each location
 class_count = pd.DataFrame()
 weekday_count = pd.DataFrame()
 
@@ -149,10 +119,6 @@ class_count = class_count .reset_index()
 weekday_count = weekday_count .reset_index()[['loc','weekday']]
 class_count.to_csv(output_path+"/table/locationClassCount.csv")
 weekday_count.to_csv(output_path+"/table/locationWeekdayCount.csv")
-
-# #-------------------------------------------------------------------------------------------------------
-# # VehicleClass for every location
-# colors=('#f1d9c3','#b3cdd6','#edbab7')
 
 def vehicle_class():
     colors=('#d5cec4','#c9d0d8','#f1f3eb')
@@ -186,12 +152,10 @@ def vehicle_class():
     ax2.set_ylabel('Rel.Recording duration proportion(%)',fontproperties = 'Times New Roman',size=14)
     ax1.grid(axis='y', linestyle='--')
     plt.show()
-    # plt.savefig(output_path+"/picture/locationVehicleClass.png", dpi=600)
 
 vehicle_class()
 
-#-------------------------------------------------------------------------------------------------------
-# truck proportion
+
 def vehicle_class2():
 
     colors=('#d5cec4','#c9d0d8','#f1f3eb')
@@ -220,16 +184,10 @@ def vehicle_class2():
     ax1.set_xlabel('LocationID',fontproperties = 'Times New Roman',size=14)
     ax2.set_ylabel('Truck proportion(%)',fontproperties = 'Times New Roman',size=14)
 
-    # plt.show()
     plt.savefig(output_path+"/picture/locationVehicleClass2.png", dpi=600)
 
 vehicle_class2()
 
-#-------------------------------------------------------------------------------------------------------
-
-
-#-------------------------------------------------------------------------------------------------------
-# roadtype
 def roadtype():
     colors=('#C1B8C8','#A9DDD6','#91ADC2')
     fig = plt.figure(figsize=(8, 4.5))
@@ -274,13 +232,11 @@ def roadtype():
     ax1.set_xlabel('LocationID',fontproperties = 'Times New Roman',size=14)
     ax2.set_ylabel('Onramp proportion(%)',fontproperties = 'Times New Roman',size=14)
 
-    # plt.show()
     plt.savefig(output_path+"/picture/locationRoadtype.png", dpi=600)
 
 roadtype()
 
-#------------------------------------------------------------------------------------------------------
-# VehicleClass for every recording
+
 def VehicleClass_for_every_recording():
     Car = recordingClassCount[recordingClassCount['vehicle type']=="car"]["counts"].values
     Truck= recordingClassCount[recordingClassCount['vehicle type']=="truck"]["counts"].values
@@ -301,10 +257,8 @@ def VehicleClass_for_every_recording():
     plt.show()
     plt.savefig(output_path+"/picture/recordingVehicleClass.png", dpi=600)
 VehicleClass_for_every_recording()
-# VehicleClass_for_every_recording()
 
-#-----------------------------------------------------------------------------------------------------------------------
-# location Roadtype 并列柱状图
+
 def Side_by_side_bar_chart_for_road_type():
     dpath=  root_path + "/asset/datasetPreprocess/classificationStatistics/table/roadTypeClassCount.csv"
     roadTypeClassCount=pd.read_csv(dpath)
@@ -340,4 +294,3 @@ def Side_by_side_bar_chart_for_road_type():
 
 Side_by_side_bar_chart_for_road_type()
 
-#-----------------------------------------------------------------------------------------------------------------------

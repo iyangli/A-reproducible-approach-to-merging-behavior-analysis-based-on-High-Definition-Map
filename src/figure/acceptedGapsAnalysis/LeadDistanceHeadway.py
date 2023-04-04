@@ -58,7 +58,6 @@ for i in [100,150,200]:
     plt.xticks(fontsize=FONTSIZE)
     plt.yticks(fontsize=FONTSIZE)
     plt.yticks([0,40,80,120,160,200])
-    # plt.xlabel("a) merging scenario",font1)
     g1.set(xlabel=None)
     plt.ylabel("Distance(m)", font1)
     plt.grid(ls='-',axis="both")
@@ -72,7 +71,6 @@ for i in [100,150,200]:
     plt.xticks(fontsize=FONTSIZE)
     plt.yticks(fontsize=FONTSIZE)
     plt.yticks([0,40,80,120,160,200])
-    # plt.xlabel("b) merging scenario",font1)
     g2.set(xlabel=None)
     plt.ylabel("Distance(m)", font1)
     plt.grid(ls='-',axis="both")
@@ -86,7 +84,6 @@ for i in [100,150,200]:
     plt.xticks(fontsize=FONTSIZE)
     plt.yticks(fontsize=FONTSIZE)
     plt.yticks([0,40,80,120,160,200])
-    # plt.xlabel("c) merging scenario",font1)
     g3.set(xlabel=None)
     plt.ylabel("Distance(m)", font1)
     plt.grid(ls='-',axis="both")
@@ -100,7 +97,6 @@ for i in [100,150,200]:
     plt.xticks(fontsize=FONTSIZE)
     plt.yticks(fontsize=FONTSIZE)
     plt.yticks([0,40,80,120,160,200])
-    # plt.xlabel("d) merging scenario",font1)
     g4.set(xlabel=None)
     plt.ylabel("Distance(m)", font1)
     plt.grid(ls='-',axis="both")
@@ -113,11 +109,7 @@ for i in [100,150,200]:
         ax3.get_legend().remove()
         ax4.get_legend().remove()
 
-
     j += 1
 
-
 plt.tight_layout()
-# plt.show()
 plt.savefig(root_path+"/asset/acceptedGaps/LeadDistance.png", dpi=300)
-# plt.clf()

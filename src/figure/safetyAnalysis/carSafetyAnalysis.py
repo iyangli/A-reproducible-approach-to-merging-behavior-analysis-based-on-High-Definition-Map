@@ -83,7 +83,6 @@ plt.style.use('seaborn-colorblind')
 
 j = 0
 for i in [2,3,5,6]:
-
     curlocation100m = mergingData100m[mergingData100m["location"]==i]
     curlocation150m = mergingData150m[mergingData150m["location"]==i]
     curlocation200m = mergingData200m[mergingData200m["location"]==i]
@@ -108,6 +107,4 @@ for i in [2,3,5,6]:
     j += 1
 
 plt.tight_layout()
-# plt.show()
 plt.savefig(root_path+"/asset/safetyAnalysis/carTTCBarplot.png", dpi=800)
-# plt.clf()

@@ -113,6 +113,4 @@ for i in [100,150,200]:
     j += 1
 
 plt.tight_layout()
-# plt.show()
 plt.savefig(root_path+"/asset/safetyAnalysis/Boxplot.png", dpi=800)
-# plt.clf()

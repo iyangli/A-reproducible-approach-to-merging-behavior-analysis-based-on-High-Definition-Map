@@ -114,10 +114,21 @@ Contributions are what make the open source community such an amazing place to b
 ## Developers
 Yang Li ( yangli.chn@outlook.com )
 
+Yang Liu ( iseliuy@nus.edu.sg )
+
+Daiheng Ni ( ni@engin.umass.edu )
+
+Ang Ji ( ang.ji@swjtu.edu.cn )
+
+Linbo Li ( llinbo@tongji.edu.cn )
+
+Yajie Zou ( yajiezou@hotmail.com )
+
+
 For help or issues using the code, please create an issue for this repository or contact Yang Li ( yangli.chn@outlook.com ).
 
 
 ## Contact
 
-For general questions about the paper, please contact Yang Li ( yangli.chn@outlook.com ).
+For general questions about the paper, please contact Yang Li ( llinbo@tongji.edu.cn ).
 

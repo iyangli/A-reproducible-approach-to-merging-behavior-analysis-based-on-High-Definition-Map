@@ -50,8 +50,6 @@ for curLocationId,curLocationGroup in nineRandomMergingData.groupby("location"):
             plt.grid(linestyle='--')
             i =i + 1
 
-
 plt.tight_layout()
-# plt.show()
 plt.savefig(rootPath+"/asset/preliminaryAnalysis/randomNineTrajectory.png", dpi=600)
 

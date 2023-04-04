@@ -114,8 +114,5 @@ for i in [100,150,200]:
 
     j += 1
 
-
 plt.tight_layout()
-# plt.show()
 plt.savefig(root_path+"/asset/acceptedGaps/LeadTimeHeadway.png", dpi=300)
-# plt.clf()
