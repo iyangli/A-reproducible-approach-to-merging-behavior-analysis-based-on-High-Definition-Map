@@ -9,11 +9,13 @@ warnings.filterwarnings("ignore")
 
 class MergingExtracionClass(object):
     def __init__(self,config):
+        # read default parameters
         self.config = config
         self.TIMESTEP = config["timestep"]
         self.DISTANCE = config["distance_threshold"]
         self.LOOKBACK = config["lookback"]
 
+        # output data path
         self.rootPath = os.path.abspath('../../')
         self.savePath = os.path.abspath('../../') + "/asset/"
         self.outputPath = self.savePath + "mergingData"+str(self.DISTANCE)+"m.csv"
@@ -24,8 +26,7 @@ class MergingExtracionClass(object):
                             'laneletId', 'laneChange', 'lonLaneletPos', 'leadId', 'rearId', 'leftLeadId', 'leftRearId',
                             'leftAlongsideId', 'curxglobalutm', 'curyglobalutm']
 
-        self.location = None
-        self.HDMdata = None
+        # tmp data for indicators calculation
         self.tracksBeforeMerge = None
         self.tracksSelf = None
         self.trackselftail = None
@@ -36,6 +37,8 @@ class MergingExtracionClass(object):
         self.tracksSelfInArea4 = None
         self.tracksSelfInArea5 = None
         self.tracksOtherInTimeArea123 = None
+
+        # match lead and rear vehicle
         self.leftIndex = None
         self.rightIndex = None
         self.alongsidetolead = None
@@ -46,6 +49,9 @@ class MergingExtracionClass(object):
         self.leftleadvehicles = None
         self.rearvehicles = None
         self.leftRearvehicles = None
+
+        self.location = None
+        self.HDMdata = None
         self.metricAreaUpstream = "area4"
         self.metricAreaWeaving = "area5"
 
@@ -57,7 +63,7 @@ class MergingExtracionClass(object):
                                          "rightLeadId",
                                          "rightRearId",
                                          "rightAlongsideId"]
-
+        # length of acceleration lane
         self.locationTotalMergingDistance = {
             "2": 160.32,
             "3": 200.52,
@@ -76,23 +82,25 @@ class MergingExtracionClass(object):
         }
 
     def initTracks(self, tracks, row):
+        # trajectory before merge
         self.tracksBeforeMerge = tracks[tracks["frame"] <= row["frame"]]
         self.tracksSelf = self.tracksBeforeMerge[self.tracksBeforeMerge["trackId"] == row["trackId"]]
 
         try:
+            # self-trajectory within the corresponding areas
             self.tracksSelfInArea23 = self.tracksSelf[self.tracksSelf["laneletId"].isin(self.HDMdata["area23"])]
             self.tracksSelfInArea123 = self.tracksSelf[self.tracksSelf["laneletId"].isin(self.HDMdata["area123"])]
             self.tracksSelfInArea4 = self.tracksSelf[self.tracksSelf["laneletId"].isin(self.HDMdata["area4"])]
             self.tracksSelfInArea5 = self.tracksSelf[self.tracksSelf["laneletId"].isin(self.HDMdata["area5"])]
+            self.tracksSelfInArea123.sort_index(inplace=True)
+            self.tracksSelfInArea23.sort_index(inplace=True)
+            self.tracksBeforeMerge.sort_index(inplace=True)
 
+            # other-trajectories within the corresponding areas
             self.tracksOtherInTimeArea123 = self.tracksBeforeMerge[
                 (self.tracksBeforeMerge["frame"] >= min(self.tracksSelfInArea123.index.values)) &
                 (self.tracksBeforeMerge["frame"] <= max(self.tracksSelfInArea123.index.values))
                 ]
-
-            self.tracksSelfInArea123.sort_index(inplace=True)
-            self.tracksSelfInArea23.sort_index(inplace=True)
-            self.tracksBeforeMerge.sort_index(inplace=True)
 
             self.trackselftail = tracks[(tracks["frame"] <= (row["frame"]+5)) & (tracks["trackId"] <= (row["trackId"]))].tail(10)
             self.tailLeadVehicles = np.unique(np.concatenate(
@@ -102,6 +110,14 @@ class MergingExtracionClass(object):
                 (self.trackselftail["rearId"].values, self.trackselftail["leftRearId"].values, self.trackselftail["rightRearId"].values),
                 axis=0))
 
+            '''
+            match surrounding vehicles
+            
+            1. leftalongside vehicles
+            2. leftlead vehicles
+            3. leftrear vehicles 
+                       
+            '''
             tmp = self.tracksSelfInArea123
             tmp = tmp.astype({"latLaneCenterOffset": float})
             tmp["leftAlongsideId"] = tmp.apply(
@@ -142,29 +158,35 @@ class MergingExtracionClass(object):
             return False
 
     def run(self):
+        # initial trajectory data
         data = pd.DataFrame()
 
         for record in range(0, 93):
-
+            # only location 2,3,5,6 are investigated
             if record in self.recordingMapToLocation["0"] \
                     or record in self.recordingMapToLocation["1"] \
                     or record in self.recordingMapToLocation["4"]:
                 continue
 
+            #  read current tracks data
             tracks, tracksmeta, recordingmeta = self.readCSVFile("%02d" % record)
+
+            #  obtain current location and weekday
             location = str(recordingmeta["locationId"].values[0])
             weekday = recordingmeta["weekday"].values[0]
+
+            # update parameters
             self.HDMdata = laneletID.lanlet2data[location]
             self.location = location
             self.weekday = weekday
 
+            # update latLaneCenterOffset and laneletId
             tracks["latLaneCenterOffset"] = tracks.apply(
                 lambda row: common.processLaneletData(row["latLaneCenterOffset"], "float"), axis=1)
-            
             tracks["laneletId"] = tracks.apply(lambda row: common.processLaneletData(row["laneletId"], "int"),axis=1)
-            
             tracks.set_index(keys="frame", inplace=True, drop=False)
 
+            # traverse each vehicle
             for curid, curgroup in tracks[self.usedColumns].groupby("trackId"):
 
                 if (curgroup["laneChange"].unique() == 0).all() or len(curgroup) < 3 / self.TIMESTEP:
@@ -172,28 +194,39 @@ class MergingExtracionClass(object):
 
                 curgroup.sort_index(inplace=True)
 
+                # only thes moment when laneChange==1 are extracted
                 laneChangeMoment = curgroup[curgroup["laneChange"] == 1]
+
+                # eliminate the unwanted moment and initial the final dataframe
                 tmpconcat = laneChangeMoment.loc[common.filterLaneChange(laneChangeMoment.index.values)]
+
+                # obtain the locationId, weekday, vehicleClass, and routeClass
                 tmpconcat["location"] = self.location
                 tmpconcat["weekday"] = self.weekday
                 tmpconcat["vehicleClass"] = tracksmeta[tracksmeta["trackId"] == curid]["class"].values[0]
                 tmpconcat["RouteClass"] = self.checkVehicleRouteClass(curgroup)
 
+
+                #  check whether the center of the vehicle in on the diving lane between the acceleration lane and the outside lane of the main line
                 tmpconcat["MergingState"] = tmpconcat.apply(
                     lambda row: self.checkMergingStatus(row, tracks, curgroup), axis=1)
 
+                # obtain the merging distance and merging distance ratio
                 tmpconcat[
                     ["MergingDistance", "MergingDistanceRatio",
                      "BreakRuleState", "BreakRuleArea"]
                 ] = tmpconcat.apply(
                     lambda row: self.getMergingDistance(row), axis=1, result_type="expand")
 
+                # obtain the merging duration
                 tmpconcat["MergingDuration"] = tmpconcat.apply(lambda row: self.getMergingDuration(row), axis=1)
 
+                # obtain the merging lateral trajectory, speed and acceleration
                 tmpconcat[
                     ["MaxLateralSpeed", "MaxiLateralAcc", "MiniLateralAcc"]
                 ] = tmpconcat.apply(lambda row: self.getLateralSpeedandAcceleration(row), axis=1, result_type="expand")
 
+                # obtain the rear vehicleId and lead vehicleId
                 tmpconcat[
                     ["SurroundingVehiclesInfo", "RearVehicleNumber","MinimumRearDistance",
                      "MinimumRearStatus","MinimumRearClass","LeadVehicleNumber",
@@ -203,95 +236,33 @@ class MergingExtracionClass(object):
                      ]
                 ] = tmpconcat.apply(lambda row: self.matchSurroundingVehicles(row, tracksmeta), axis=1, result_type="expand")
 
+                # obtain the traffic flow, density, and speed
                 tmpconcat[
                     ["trafficFlowArea4", "trafficDensityArea4",
                      "trafficSpeedArea4", "trafficFlowArea5",
                      "trafficDensityArea5", "trafficSpeedArea5"]
                 ] = tmpconcat.apply(lambda row: self.getTrafficFlowDenstiySpeed(row), axis=1, result_type="expand")
 
+                # obtain the consecutive lane-changing duraiton
                 tmpconcat[["LaneChangingCounts", "ConsecutiveDuration"]] = self.calculateConsecutiveLanechange(
                     common.filterLaneChange(tmpconcat.index.values),
                     tmpconcat
                 )
 
+                # obtain the time to collision
                 tmpconcat[
                     ["conflictData", "MiniLeadTTC","MiniRearTTC"]
                 ] = tmpconcat.apply(
                     lambda row: self.getMinimumTTCRearAndLead(row), axis=1, result_type="expand")
 
+                # save current vehicleId to the dataframe
                 data = pd.concat([data, tmpconcat[tmpconcat["MergingState"]==True]], axis=0)
 
+            # del dataframe
             del tracks, tracksmeta, recordingmeta
 
+        # save data
         data.to_csv(self.outputPath)
-
-    def getTTCList(self, surroundingtracksData):
-        framelist, TTClist, distancelist, speeddiff = [], [], [], []
-
-        for index, row in self.tracksSelfInArea23.iterrows():
-            tmp = surroundingtracksData[surroundingtracksData["frame"] == row["frame"]]
-            if tmp.empty:
-                continue
-
-            positionself = np.array([row["xCenter"], row["yCenter"]])
-            positionother = np.array([tmp["xCenter"].values[0], tmp["yCenter"].values[0]])
-
-            speedself = np.array([row["xVelocity"], row["yVelocity"]])
-            speedother = np.array([tmp["xVelocity"].values[0], tmp["yVelocity"].values[0]])
-
-            distance = np.sqrt(np.dot((positionself - positionother), (positionself - positionother).T))
-            distance_ = np.dot((positionself - positionother).T, (speedself - speedother)) / distance
-
-            TTC = - distance / distance_
-
-            if TTC < 0 or distance > 50:
-                continue
-
-            TTClist.append(TTC)
-            distancelist.append(distance)
-            speeddiff.append(np.sqrt(np.dot((speedself - speedother), (speedself - speedother).T)))
-            framelist.append(row["frame"])
-
-        dic = {
-            "frame": framelist,
-            "TTC": TTClist,
-            "distance": distancelist,
-            "relspe": speeddiff,
-        }
-
-        if len(TTClist) == 0:
-            return 0
-
-        return dic
-
-    def getMinimumTTCRearAndLead(self, row):
-        if row["MergingState"] == False or row["RouteClass"] == "mainline" or row["BreakRuleState"] == "Yes":
-            return 999,999,999
-
-        conflictdata = {}
-
-        LeadVehicleTTC = 999
-        RearVehicleTTC = 999
-
-        LeadVehicle = row["LeadVehicleId"]
-        RearVehicle = row["RearVehicleId"]
-
-        TTCLead = self.getTTCList(self.tracksBeforeMerge[self.tracksBeforeMerge["trackId"] == LeadVehicle])
-        TTCRear = self.getTTCList(self.tracksBeforeMerge[self.tracksBeforeMerge["trackId"] == RearVehicle])
-
-        if TTCLead != 0 :
-            LeadVehicleTTC = min(TTCLead["TTC"])
-            conflictdata[LeadVehicle] = TTCLead
-
-        if TTCRear != 0 :
-            RearVehicleTTC = min(TTCRear["TTC"])
-            conflictdata[RearVehicle] = TTCRear
-
-        if len(conflictdata) != 0:
-
-            return conflictdata, LeadVehicleTTC, RearVehicleTTC
-        else:
-            return 999, 999,999
 
 
     def calculateFlowDensitySpeed(self, curtracks: object, area: object):
@@ -301,7 +272,6 @@ class MergingExtracionClass(object):
         time = (max(self.tracksSelfInArea123.index.values)-min(self.tracksSelfInArea123.index.values)) * 0.04
         roadlength = sum([self.HDMdata["length"][str(i)] for i in self.HDMdata[area]])
         retangle = time * roadlength
-
         totaldistance = []
         totaltime = []
         for curvehicle, curgroup in curtracks.groupby("trackId"):
@@ -654,3 +624,73 @@ class MergingExtracionClass(object):
                 for i in cur_string.split(";"):
                     string_new.append(int(i))
         return string_new
+
+
+    def getTTCList(self, surroundingtracksData):
+        framelist, TTClist, distancelist, speeddiff = [], [], [], []
+
+        for index, row in self.tracksSelfInArea23.iterrows():
+            tmp = surroundingtracksData[surroundingtracksData["frame"] == row["frame"]]
+            if tmp.empty:
+                continue
+
+            positionself = np.array([row["xCenter"], row["yCenter"]])
+            positionother = np.array([tmp["xCenter"].values[0], tmp["yCenter"].values[0]])
+
+            speedself = np.array([row["xVelocity"], row["yVelocity"]])
+            speedother = np.array([tmp["xVelocity"].values[0], tmp["yVelocity"].values[0]])
+
+            distance = np.sqrt(np.dot((positionself - positionother), (positionself - positionother).T))
+            distance_ = np.dot((positionself - positionother).T, (speedself - speedother)) / distance
+
+            TTC = - distance / distance_
+
+            if TTC < 0 or distance > 50:
+                continue
+
+            TTClist.append(TTC)
+            distancelist.append(distance)
+            speeddiff.append(np.sqrt(np.dot((speedself - speedother), (speedself - speedother).T)))
+            framelist.append(row["frame"])
+
+        dic = {
+            "frame": framelist,
+            "TTC": TTClist,
+            "distance": distancelist,
+            "relspe": speeddiff,
+        }
+
+        if len(TTClist) == 0:
+            return 0
+
+        return dic
+
+    def getMinimumTTCRearAndLead(self, row):
+        if row["MergingState"] == False or row["RouteClass"] == "mainline" or row["BreakRuleState"] == "Yes":
+            return 999,999,999
+
+        conflictdata = {}
+
+        LeadVehicleTTC = 999
+        RearVehicleTTC = 999
+
+        LeadVehicle = row["LeadVehicleId"]
+        RearVehicle = row["RearVehicleId"]
+
+        TTCLead = self.getTTCList(self.tracksBeforeMerge[self.tracksBeforeMerge["trackId"] == LeadVehicle])
+        TTCRear = self.getTTCList(self.tracksBeforeMerge[self.tracksBeforeMerge["trackId"] == RearVehicle])
+
+        if TTCLead != 0 :
+            LeadVehicleTTC = min(TTCLead["TTC"])
+            conflictdata[LeadVehicle] = TTCLead
+
+        if TTCRear != 0 :
+            RearVehicleTTC = min(TTCRear["TTC"])
+            conflictdata[RearVehicle] = TTCRear
+
+        if len(conflictdata) != 0:
+
+            return conflictdata, LeadVehicleTTC, RearVehicleTTC
+        else:
+            return 999, 999,999
+
