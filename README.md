@@ -1,7 +1,5 @@
 # A-reproducible-approach-to-merging-behavior-analysis-based-on-High-Definition-Map
 
-**My personal website: www.vehicletrajectorymining.com.**
-
 ## About
 This project contains the source code and data for the paper titled "A reproducible approach to merging behavior analysis based on High Definition Map".
 
