@@ -4,6 +4,10 @@
 This project contains the source code and data for the paper titled "A reproducible approach to merging behavior analysis based on High Definition Map".
 
 ### Citation
+
+If our work is helpful for your research, please consider citing the following BibTeX entry in your manuscript:
+
+
 ```
 @article{
     Yang Li, 2023
